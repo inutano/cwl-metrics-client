@@ -11,5 +11,5 @@ Docker container is also available via [quay.io](https://quay.io/repository/inut
 ```
 $ cwl-metrics status
 cwl-metrics is running.
-$ docker run -it --rm -e ES_HOST=$ES_HOST -e ES_PORT=$ES_PORT quay.io/inutano/cwl-metrics-cleint:latest json
+$ docker run -it --rm -e ES_HOST=$ES_HOST -e ES_PORT=$ES_PORT quay.io/inutano/cwl-metrics-client:latest json
 ```
