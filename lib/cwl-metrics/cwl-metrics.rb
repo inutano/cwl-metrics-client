@@ -35,13 +35,13 @@ module CWLMetrics
     #
 
     def container_metrics(cid)
-      m = search_container_metrics(cid)
+      records = search_container_metrics(cid).map{|r| r["_source"] }
       {
-        "cpu_total_percent": cpu_total_percent(m),
-        "memory_max_usage": memory_max_usage(m),
-        "memory_cache": memory_cache(m),
-        "blkio_total_bytes": blkio_total_bytes(m),
-        "elapsed_time": elapsed_time(m),
+        "cpu_total_percent": cpu_total_percent(records),
+        "memory_max_usage": memory_max_usage(records),
+        "memory_cache": memory_cache(records),
+        "blkio_total_bytes": blkio_total_bytes(records),
+        "elapsed_time": elapsed_time(records),
       }
     end
 
@@ -62,7 +62,7 @@ module CWLMetrics
     end
 
     def elapsed_time(records)
-      timestamps = records.map{|r| r["_source"]["timestamp"] }.sort
+      timestamps = records.map{|r| r["timestamp"] }.sort
       if timestamps.size > 1
         timestamps.last - timestamps.first
       elsif timestamps.size == 1
@@ -71,7 +71,7 @@ module CWLMetrics
     end
 
     def extract_metrics_values(records, name, field)
-      records.select{|r| r["_source"]["name"] == name }.map{|r| r["_source"]["fields"][field] }.compact.sort.last
+      records.select{|r| r["name"] == name }.map{|r| r["fields"][field] }.compact.sort.last
     end
 
     #
@@ -90,12 +90,12 @@ module CWLMetrics
             bool: {
               must: {
                 match: {
-                  "_type" => "docker_metrics",
+                  "_type": "docker_metrics",
                 }
               },
               filter: {
                 term: {
-                  "fields.container_id" => cid,
+                  "fields.container_id": cid,
                 }
               }
             }
@@ -138,7 +138,7 @@ module CWLMetrics
               filter: {
                 term:
                 {
-                  "_type" => "workflow_log"
+                  "_type": "workflow_log"
                 }
               }
             }
