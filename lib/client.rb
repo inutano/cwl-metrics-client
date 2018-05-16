@@ -6,9 +6,16 @@ $LOAD_PATH << __dir__
 require 'elasticsearch'
 require 'cwl-metrics/cwl-metrics'
 
+ES_HOST = ENV["ES_HOST"] || "localhost"
+ES_PORT = ENV["ES_PORT"] || "9200"
+
 if __FILE__ == $0
-  endpoint = "35.173.197.179:9200"
-  client = Elasticsearch::Client.new(hosts: endpoint, log: false)
+  client = Elasticsearch::Client.new(hosts: "#{ES_HOST}:#{ES_PORT}", log: false)
   CWLMetrics.register_client(client)
-  puts CWLMetrics.json
+  case ARGV.first
+  when "json"
+    puts CWLMetrics.json
+  when "tsv"
+    puts CWLMetrics.tsv
+  end
 end
