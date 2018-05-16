@@ -140,7 +140,7 @@ module CWLMetrics
                 {
                   "_type" => "workflow_log"
                 }
-              }              
+              }
             }
           }
         }
