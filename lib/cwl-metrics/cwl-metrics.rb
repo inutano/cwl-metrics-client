@@ -9,9 +9,17 @@ module CWLMetrics
       @@client = client
     end
 
+    #
+    # Output methods
+    #
+
     def json
       JSON.dump({"CWL-metrics": metrics})
     end
+
+    #
+    # Summarize metrics for each workflow run
+    #
 
     def metrics
       extract_workflow_info.map do |wf|
@@ -21,6 +29,10 @@ module CWLMetrics
         wf
       end
     end
+
+    #
+    # Metrics for each container
+    #
 
     def container_metrics(cid)
       m = search_container_metrics(cid)
@@ -63,7 +75,7 @@ module CWLMetrics
     end
 
     #
-    # Retrieve metrics from index:telegraf
+    # Retrieve metrics data from index:telegraf
     #
 
     def search_container_metrics(cid)
@@ -91,6 +103,10 @@ module CWLMetrics
         }
       }
     end
+
+    #
+    # Retrieve workflow metadata from index:workflow
+    #
 
     def extract_workflow_info
       search_workflows.map do |record|
