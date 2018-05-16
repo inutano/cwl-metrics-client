@@ -133,8 +133,14 @@ module CWLMetrics
         index: 'workflow',
         body: {
           query: {
-            match: {
-              "_type" => "workflow_log"
+            bool: {
+              must: { "match_all": {} },
+              filter: {
+                term:
+                {
+                  "_type" => "workflow_log"
+                }
+              }              
             }
           }
         }
