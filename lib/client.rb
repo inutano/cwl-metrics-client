@@ -9,5 +9,6 @@ require 'cwl-metrics/cwl-metrics'
 if __FILE__ == $0
   endpoint = "35.173.197.179:9200"
   client = Elasticsearch::Client.new(hosts: endpoint, log: false)
-  puts CWLMetrics.aggregate(client)
+  CWLMetrics.register_client(client)
+  puts CWLMetrics.json
 end
