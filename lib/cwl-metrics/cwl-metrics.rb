@@ -17,6 +17,51 @@ module CWLMetrics
       JSON.dump({"CWL-metrics": metrics})
     end
 
+    def tsv
+      table = [tsv_header]
+      metrics.each do |wf|
+        wf[:steps].each_pair do |cid, step|
+          tifs = step[:input_files].values.reduce(:+) if !step[:input_files].empty?
+          table << [
+            cid[0..11],
+            step[:stepname],
+            wf[:platform][:instance_type],
+            step[:metrics][:cpu_total_percent],
+            step[:metrics][:memory_max_usage],
+            step[:metrics][:memory_cache],
+            step[:metrics][:blkio_total_bytes],
+            step[:metrics][:elapsed_time],
+            wf[:workflow_id],
+            wf[:workflow_name],
+            step[:container_name],
+            step[:tool_version],
+            step[:tool_status],
+            tifs,
+          ]
+        end
+      end
+      table.map{|line| line.join("\t") }.join("\n")
+    end
+
+    def tsv_header
+      [
+        "container_id",
+        "stepname",
+        "instance_type",
+        "cpu_total_percent",
+        "memory_max_usage",
+        "memory_cache",
+        "blkio_total_bytes",
+        "elapsed_time",
+        "workflow_id",
+        "workflow_name",
+        "container_name",
+        "tool_version",
+        "tool_status",
+        "total_inputfile_size",
+      ]
+    end
+
     #
     # Summarize metrics for each workflow run
     #
