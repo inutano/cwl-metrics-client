@@ -10,12 +10,85 @@ module CWLMetrics
     end
 
     def json
-      JSON.dump(aggregate)
+      JSON.dump({"CWL-metrics": metrics})
     end
 
-    def aggregate
+    def metrics
+      extract_workflow_info.map do |wf|
+        wf[:steps].each_key do |cid|
+          wf[:steps][cid][:metrics] = container_metrics(cid)
+        end
+        wf
+      end
+    end
+
+    def container_metrics(cid)
+      m = search_container_metrics(cid)
       {
-        "metrics": extract_workflow_info
+        "cpu_total_percent": cpu_total_percent(m),
+        "memory_max_usage": memory_max_usage(m),
+        "memory_cache": memory_cache(m),
+        "blkio_total_bytes": blkio_total_bytes(m),
+        "elapsed_time": elapsed_time(m),
+      }
+    end
+
+    def cpu_total_percent(records)
+      extract_metrics_values(records, "docker_container_cpu", "usage_percent")
+    end
+
+    def memory_max_usage(records)
+      extract_metrics_values(records, "docker_container_mem", "max_usage")
+    end
+
+    def memory_cache(records)
+      extract_metrics_values(records, "docker_container_mem", "cache")
+    end
+
+    def blkio_total_bytes(records)
+      extract_metrics_values(records, "docker_container_blkio", "io_service_bytes_recursive_total")
+    end
+
+    def elapsed_time(records)
+      timestamps = records.map{|r| r["_source"]["timestamp"] }.sort
+      if timestamps.size > 1
+        timestamps.last - timestamps.first
+      elsif timestamps.size == 1
+        timestamps.first
+      end
+    end
+
+    def extract_metrics_values(records, name, field)
+      records.select{|r| r["_source"]["name"] == name }.map{|r| r["_source"]["fields"][field] }.compact.sort.last
+    end
+
+    #
+    # Retrieve metrics from index:telegraf
+    #
+
+    def search_container_metrics(cid)
+      @@client.search(search_container_metrics_query(cid))["hits"]["hits"]
+    end
+
+    def search_container_metrics_query(cid)
+      {
+        index: 'telegraf',
+        body: {
+          query: {
+            bool: {
+              must: {
+                match: {
+                  "_type" => "docker_metrics",
+                }
+              },
+              filter: {
+                term: {
+                  "fields.container_id" => cid,
+                }
+              }
+            }
+          }
+        }
       }
     end
 
