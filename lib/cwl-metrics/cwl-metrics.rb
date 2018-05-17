@@ -128,27 +128,46 @@ module CWLMetrics
     #
 
     def search_container_metrics(cid)
-      @@client.search(search_container_metrics_query(cid))["hits"]["hits"]
+      r = @@client.search(search_container_metrics_query(cid, 0, 0))
+      total_hits = r["hits"]["total"].to_i
+      if total_hits > 10
+        [
+          @@client.search(search_container_metrics_query(cid, 0, 10))["hits"]["hits"],
+          @@client.search(search_container_metrics_query(cid, total_hits-10, 10))["hits"]["hits"]
+        ].flatten
+      else
+        @@client.search(search_container_metrics_query(cid, 0, 10))["hits"]["hits"]
+      end
     end
 
-    def search_container_metrics_query(cid)
+    def search_container_metrics_query(cid, from, size)
       {
         index: 'telegraf',
         body: {
           query: {
             bool: {
-              must: {
-                match: {
-                  "_type": "docker_metrics",
-                }
-              },
+              must: { match_all: {} },
               filter: {
-                term: {
-                  "fields.container_id": cid,
+                bool: {
+                  must: [
+                    {
+                      term: {
+                        "fields.container_id": cid,
+                      },
+
+                    },
+                    {
+                      terms: {
+                        "name": ["docker_container_cpu", "docker_container_mem", "docker_container_blkio"]
+                      },
+                    }
+                  ]
                 }
               }
             }
-          }
+          },
+          from: from,
+          size: size,
         }
       }
     end
@@ -193,7 +212,9 @@ module CWLMetrics
                 }
               }
             }
-          }
+          },
+          from: 0,
+          size: 100
         }
       }
     end
