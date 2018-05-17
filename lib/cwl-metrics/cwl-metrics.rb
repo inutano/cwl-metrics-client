@@ -33,6 +33,8 @@ module CWLMetrics
             step[:metrics][:elapsed_time],
             wf[:workflow_id],
             wf[:workflow_name],
+            wf[:workflow_start_date],
+            wf[:workflow_end_date],
             step[:container_name],
             step[:tool_version],
             step[:tool_status],
@@ -55,6 +57,8 @@ module CWLMetrics
         "elapsed_time",
         "workflow_id",
         "workflow_name",
+        "workflow_start_date",
+        "workflow_end_date",
         "container_name",
         "tool_version",
         "tool_status",
@@ -159,6 +163,8 @@ module CWLMetrics
         {
           "workflow_id": record["_id"],
           "workflow_name": wf_meta["cwlfile"],
+          "workflow_start_date": wf_meta["start_date"],
+          "workflow_end_date": wf_meta["end_date"],
           "platform": {
             "instance_type": wf_meta["platform"]["instance_type"],
             "region": wf_meta["platform"]["region"],
