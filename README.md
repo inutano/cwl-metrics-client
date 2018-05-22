@@ -4,7 +4,7 @@
 
 # How to use
 
-Easiest way to access your elasticsearch server of CWL-spec is to use `cwl-metrics fetch` command bundled in the [CWL-metrics](https://github.com/inutano/cwl-metrics). See README in the repo for details.
+Easiest way to access your elasticsearch server of CWL-spec is to use `cwl-metrics fetch` command bundled in the [CWL-metrics](https://github.com/inutano/cwl-metrics). See [github pages](https://inutano.github.io/cwl-metrics/) for details.
 
 Docker container is also available via [quay.io](https://quay.io/repository/inutano/cwl-metrics-client).
 
