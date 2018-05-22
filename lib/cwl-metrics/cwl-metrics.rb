@@ -181,13 +181,15 @@ module CWLMetrics
         wf_meta = record["_source"]["workflow"]
         {
           "workflow_id": record["_id"],
-          "workflow_name": wf_meta["cwlfile"],
+          "workflow_name": wf_meta["cwl_file"],
           "workflow_start_date": wf_meta["start_date"],
           "workflow_end_date": wf_meta["end_date"],
           "platform": {
-            "instance_type": wf_meta["platform"]["instance_type"],
-            "region": wf_meta["platform"]["region"],
+            "instance_type": wf_meta["platform"]["ec2_instance_type"],
+            "region": wf_meta["platform"]["ec2_region"],
             "hostname": wf_meta["platform"]["hostname"],
+            "total_memory": wf_meta["platform"]["total_memory"],
+            "disk_size": wf_meta["platform"]["disk_size"],
           },
           "steps": extract_step_info(record["_source"]["steps"]),
         }
