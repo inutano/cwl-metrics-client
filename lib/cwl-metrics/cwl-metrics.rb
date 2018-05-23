@@ -84,43 +84,41 @@ module CWLMetrics
     #
 
     def container_metrics(cid)
-      records = search_container_metrics(cid).map{|r| r["_source"] }
+      [
+        metrics_cpu(cid),
+        metrics_memory(cid),
+        metrics_blkio(cid),
+        metrics_elapsed_time(cid),
+      ].inject(&:merge)
+    end
+
+    def metrics_cpu(cid)
+      records = search_container_metrics(cid, "docker_container_cpu").map{|r| r["_source"]["usage_percent"] }
       {
-        "cpu_total_percent": cpu_total_percent(records),
-        "memory_max_usage": memory_max_usage(records),
-        "memory_cache": memory_cache(records),
-        "blkio_total_bytes": blkio_total_bytes(records),
-        "elapsed_time": elapsed_time(records),
+        "cpu_total_percent": records.compact.sort.last,
       }
     end
 
-    def cpu_total_percent(records)
-      extract_metrics_values(records, "docker_container_cpu", "usage_percent")
+    def metrics_memory(cid)
+      records = search_container_metrics(cid, "docker_container_mem").map{|r| r["_source"] }
+      {
+        "memory_max_usage": records.map{|r| r["max_usage"] }.compact.sort.last,
+        "memory_cache": records.map{|r| r["cache"] }.compact.sort.last,
+      }
     end
 
-    def memory_max_usage(records)
-      extract_metrics_values(records, "docker_container_mem", "max_usage")
+    def metrics_blkio(cid)
+      records = search_container_metrics(cid, "docker_container_blkio").map{|r| r["_source"]["io_service_bytes_recursive_total"] }
+      {
+        "blkio_total_bytes": records.compact.sort.last,
+      }
     end
 
-    def memory_cache(records)
-      extract_metrics_values(records, "docker_container_mem", "cache")
-    end
-
-    def blkio_total_bytes(records)
-      extract_metrics_values(records, "docker_container_blkio", "io_service_bytes_recursive_total")
-    end
-
-    def elapsed_time(records)
-      timestamps = records.map{|r| r["timestamp"] }.sort
-      if timestamps.size > 1
-        timestamps.last - timestamps.first
-      elsif timestamps.size == 1
-        timestamps.first
-      end
-    end
-
-    def extract_metrics_values(records, name, field)
-      records.select{|r| r["name"] == name }.map{|r| r["fields"][field] }.compact.sort.last
+    def metrics_elapsed_time(cid)
+      ts = search_container_metrics(cid, "docker_container_mem").map{|r| r["_source"]["timestamp"] }.sort
+      {
+        "elapsed_time": ts.empty? ? 0 : (ts.last - ts.first),
+      }
     end
 
     #
@@ -160,11 +158,11 @@ module CWLMetrics
     #
     # Get metrics data by container id
     #
-    def search_container_metrics(cid)
-      get_both_ends_of_hits(search_container_metrics_query(cid))
+    def search_container_metrics(cid, name)
+      get_both_ends_of_hits(search_container_metrics_query(cid, name))
     end
 
-    def search_container_metrics_query(cid)
+    def search_container_metrics_query(cid, name)
       {
         index: 'telegraf',
         body: {
@@ -181,8 +179,8 @@ module CWLMetrics
 
                     },
                     {
-                      terms: {
-                        "name": ["docker_container_cpu", "docker_container_mem", "docker_container_blkio"]
+                      term: {
+                        "name": name
                       },
                     }
                   ]
