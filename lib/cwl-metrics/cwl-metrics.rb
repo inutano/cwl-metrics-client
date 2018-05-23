@@ -124,23 +124,47 @@ module CWLMetrics
     end
 
     #
-    # Retrieve metrics data from index:telegraf
+    # Methods to retrieve metrics data via Elasticsearch API
     #
-
-    def search_container_metrics(cid)
-      r = @@client.search(search_container_metrics_query(cid, 0, 0))
-      total_hits = r["hits"]["total"].to_i
-      if total_hits > 10
-        [
-          @@client.search(search_container_metrics_query(cid, 0, 10))["hits"]["hits"],
-          @@client.search(search_container_metrics_query(cid, total_hits-10, 10))["hits"]["hits"]
-        ].flatten
-      else
-        @@client.search(search_container_metrics_query(cid, 0, 10))["hits"]["hits"]
-      end
+    def search_window_width
+      5000
     end
 
-    def search_container_metrics_query(cid, from, size)
+    def get_both_ends_of_hits(search_query)
+      all_hits = get_all_hits(search_query).sort_by{|hit| hit["_source"]["timestamp"] }
+      [
+        all_hits.first(50),
+        all_hits.last(50),
+      ].flatten
+    end
+
+    def get_all_hits(search_query)
+      total_hits = get_total_hits(search_query)
+      hits_a = total_hits.times.each_slice(search_window_width).map do |i_a|
+        window_search(search_query, i_a.first, search_window_width)["hits"]
+      end
+      hits_a.flatten
+    end
+
+    def get_total_hits(search_query)
+      window_search(search_query, 0, 0)["total"].to_i
+    end
+
+    def window_search(search_query, from, size)
+      q = search_query
+      q[:body][:from] = from
+      q[:body][:size] = size
+      @@client.search(q)["hits"]
+    end
+
+    #
+    # Get metrics data by container id
+    #
+    def search_container_metrics(cid)
+      get_both_ends_of_hits(search_container_metrics_query(cid))
+    end
+
+    def search_container_metrics_query(cid)
       {
         index: 'telegraf',
         body: {
@@ -165,9 +189,7 @@ module CWLMetrics
                 }
               }
             }
-          },
-          from: from,
-          size: size,
+          }
         }
       }
     end
@@ -197,7 +219,7 @@ module CWLMetrics
     end
 
   	def search_workflows
-      @@client.search(search_workflows_query)["hits"]["hits"]
+      get_all_hits(search_workflows_query)
     end
 
     def search_workflows_query
@@ -214,9 +236,7 @@ module CWLMetrics
                 }
               }
             }
-          },
-          from: 0,
-          size: 100
+          }
         }
       }
     end
