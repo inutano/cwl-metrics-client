@@ -93,24 +93,27 @@ module CWLMetrics
     end
 
     def metrics_cpu(cid)
-      records = search_container_metrics(cid, "docker_container_cpu").map{|r| r["_source"]["usage_percent"] }
+      records = search_container_metrics(cid, "docker_container_cpu")
+      usage_parcent_values = records.map{|r| r["_source"]["fields"]["usage_percent"] }.compact
       {
-        "cpu_total_percent": records.compact.sort.last,
+        "cpu_total_percent": usage_parcent_values.sort.last,
       }
     end
 
     def metrics_memory(cid)
-      records = search_container_metrics(cid, "docker_container_mem").map{|r| r["_source"] }
+      records = search_container_metrics(cid, "docker_container_mem")
+      memory_usage_fields = records.map{|r| r["_source"]["fields"] }
       {
-        "memory_max_usage": records.map{|r| r["max_usage"] }.compact.sort.last,
-        "memory_cache": records.map{|r| r["cache"] }.compact.sort.last,
+        "memory_max_usage": memory_usage_fields.map{|r| r["max_usage"] }.compact.sort.last,
+        "memory_cache": memory_usage_fields.map{|r| r["cache"] }.compact.sort.last,
       }
     end
 
     def metrics_blkio(cid)
-      records = search_container_metrics(cid, "docker_container_blkio").map{|r| r["_source"]["io_service_bytes_recursive_total"] }
+      records = search_container_metrics(cid, "docker_container_blkio")
+      blkio_records = records.map{|r| r["_source"]["fields"]["io_service_bytes_recursive_total"] }.compact
       {
-        "blkio_total_bytes": records.compact.sort.last,
+        "blkio_total_bytes": blkio_records.sort.last,
       }
     end
 
@@ -176,7 +179,6 @@ module CWLMetrics
                       term: {
                         "fields.container_id": cid,
                       },
-
                     },
                     {
                       term: {
