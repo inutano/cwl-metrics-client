@@ -24,23 +24,29 @@ module CWLMetrics
         wf[:steps].each_pair do |cid, step|
           tifs = step[:input_files].values.reduce(:+) if !step[:input_files].empty?
           table << [
+            # ID
             cid[0..11],
             step[:stepname],
+            # Env
             wf[:platform][:hostname],
             wf[:platform][:instance_type],
+            # Metrics
             step[:metrics][:cpu_total_percent],
             step[:metrics][:memory_max_usage],
             step[:metrics][:memory_cache],
             step[:metrics][:blkio_total_bytes],
+            # Container info
             step[:docker_elapsed_sec],
-            wf[:workflow_id],
-            wf[:workflow_name],
-            wf[:workflow_elapsed_sec],
+            step[:docker_exit_code],
+            # Container meta
             step[:container_name],
             step[:tool_version],
             step[:tool_status],
-            step[:docker_exit_code],
             tifs,
+            # Workflow meta
+            wf[:workflow_id],
+            wf[:workflow_name],
+            wf[:workflow_elapsed_sec],
           ]
         end
       end
@@ -49,23 +55,29 @@ module CWLMetrics
 
     def tsv_header
       [
+        # ID
         "container_id",
         "stepname",
+        # Env
         "hostname",
         "instance_type",
+        # Metrics
         "cpu_total_percent",
         "memory_max_usage",
         "memory_cache",
         "blkio_total_bytes",
+        # Container info
         "container_elapsed_sec",
-        "workflow_id",
-        "workflow_name",
-        "workflow_elapsed_sec",
+        "container_exit_code",
+        # Container meta
         "container_name",
         "tool_version",
         "tool_status",
-        "container_exit_code",
         "total_inputfile_size",
+        # Workflow meta
+        "workflow_id",
+        "workflow_name",
+        "workflow_elapsed_sec",
       ]
     end
 
