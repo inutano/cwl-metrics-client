@@ -2,6 +2,7 @@
 # cwl-metrics.rb: module for cwl-metirics-client
 #
 require 'json'
+require 'date'
 
 module CWLMetrics
   module CWLMetricsMethods
@@ -201,11 +202,16 @@ module CWLMetrics
     def extract_workflow_info
       search_workflows.map do |record|
         wf_meta = record["_source"]["workflow"]
+        start_date = DateTime.parse(wf_meta["start_date"])
+        end_date = DateTime.parse(wf_meta["end_date"])
+        elapsed_sec = ((start_date - end_date) * 24 * 60 * 60).to_f
+
         {
           "workflow_id": record["_id"],
           "workflow_name": wf_meta["cwl_file"],
-          "workflow_start_date": wf_meta["start_date"],
-          "workflow_end_date": wf_meta["end_date"],
+          "workflow_start_date": start_date,
+          "workflow_end_date": end_date,
+          "workflow_elapsed_sec": elapsed_sec,
           "platform": {
             "instance_type": wf_meta["platform"]["ec2_instance_type"],
             "region": wf_meta["platform"]["ec2_region"],
@@ -244,12 +250,23 @@ module CWLMetrics
     def extract_step_info(steps_hash)
       step_info = {}
       steps_hash.each_pair do |k,v|
+        d_inspect = v["docker_inspect"]
+        start_date = DateTime.parse(d_inspect["start_time"])
+        end_date = DateTime.parse(d_inspect["end_time"])
+        elapsed_sec = ((start_time - end_time) * 24 * 60 * 60).to_f
+
         step_info[v["container_id"]] = {
           "stepname": v["stepname"],
           "container_name": v["container_name"],
           "tool_version": v["tool_version"],
           "tool_status": v["tool_status"],
-          "input_files": extract_input_file_size(v)
+          "input_files": extract_input_file_size(v),
+          "docker_image": v["docker_image"],
+          "docker_cmd": v["docker_cmd"],
+          "docker_start_date": start_date,
+          "docker_end_date": end_date,
+          "docker_elapsed_sec": elapsed_sec,
+          "docker_exit_code": d_inspect["exit_code"],
         }
       end
       step_info
