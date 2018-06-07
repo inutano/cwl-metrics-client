@@ -259,7 +259,7 @@ module CWLMetrics
         d_inspect = v["docker_inspect"]
         start_date = DateTime.parse(d_inspect["start_time"])
         end_date = DateTime.parse(d_inspect["end_time"])
-        elapsed_sec = ((start_time - end_time) * 24 * 60 * 60).to_f
+        elapsed_sec = ((start_date - end_date) * 24 * 60 * 60).to_f
 
         step_info[v["container_id"]] = {
           "stepname": v["stepname"],
