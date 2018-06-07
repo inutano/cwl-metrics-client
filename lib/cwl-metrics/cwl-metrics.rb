@@ -89,7 +89,6 @@ module CWLMetrics
         metrics_cpu(cid),
         metrics_memory(cid),
         metrics_blkio(cid),
-        metrics_elapsed_time(cid),
       ].inject(&:merge)
     end
 
@@ -115,13 +114,6 @@ module CWLMetrics
       blkio_records = records.map{|r| r["_source"]["fields"]["io_service_bytes_recursive_total"] }.compact
       {
         "blkio_total_bytes": blkio_records.sort.last,
-      }
-    end
-
-    def metrics_elapsed_time(cid)
-      ts = search_container_metrics(cid, "docker_container_mem").map{|r| r["_source"]["timestamp"] }.sort
-      {
-        "elapsed_time": ts.empty? ? 0 : (ts.last - ts.first),
       }
     end
 
