@@ -26,6 +26,7 @@ module CWLMetrics
           table << [
             cid[0..11],
             step[:stepname],
+            wf[:platform][:hostname],
             wf[:platform][:instance_type],
             step[:metrics][:cpu_total_percent],
             step[:metrics][:memory_max_usage],
@@ -50,6 +51,7 @@ module CWLMetrics
       [
         "container_id",
         "stepname",
+        "hostname",
         "instance_type",
         "cpu_total_percent",
         "memory_max_usage",
