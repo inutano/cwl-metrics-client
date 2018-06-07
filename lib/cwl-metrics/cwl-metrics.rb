@@ -39,6 +39,7 @@ module CWLMetrics
             step[:container_name],
             step[:tool_version],
             step[:tool_status],
+            step[:docker_exit_code],
             tifs,
           ]
         end
@@ -63,6 +64,7 @@ module CWLMetrics
         "container_name",
         "tool_version",
         "tool_status",
+        "container_exit_code",
         "total_inputfile_size",
       ]
     end
