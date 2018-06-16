@@ -36,11 +36,10 @@ module CWLMetrics
             step[:metrics][:memory_cache],
             step[:metrics][:blkio_total_bytes],
             # Container info
+            step[:docker_image],
             step[:docker_elapsed_sec],
             step[:docker_exit_code],
             # Container meta
-            step[:container_name],
-            step[:tool_version],
             step[:tool_status],
             tifs,
             # Workflow meta
@@ -67,11 +66,10 @@ module CWLMetrics
         "memory_cache",
         "blkio_total_bytes",
         # Container info
+        "container_image",
         "container_elapsed_sec",
         "container_exit_code",
         # Container meta
-        "container_name",
-        "tool_version",
         "tool_status",
         "total_inputfile_size",
         # Workflow meta
