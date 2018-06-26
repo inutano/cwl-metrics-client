@@ -132,6 +132,7 @@ module CWLMetrics
     #
     # Methods to retrieve metrics data via Elasticsearch API
     #
+
     def search_window_width
       5000
     end
@@ -167,7 +168,7 @@ module CWLMetrics
     # Get metrics data by container id
     #
     def search_container_metrics(cid, name)
-      get_both_ends_of_hits(search_container_metrics_query(cid, name))
+      @@client.search(search_container_metrics_query(cid, name))["hits"]["hits"]
     end
 
     def search_container_metrics_query(cid, name)
@@ -194,7 +195,15 @@ module CWLMetrics
                 }
               }
             }
-          }
+          },
+          sort: [
+            {
+              "timestamp": {
+                order: "desc"
+              }
+            }
+          ],
+          size: 10,
         }
       }
     end
