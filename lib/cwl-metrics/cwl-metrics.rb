@@ -84,50 +84,146 @@ module CWLMetrics
     #
 
     def metrics
+      fetched = fetch_metrics
       extract_workflow_info.map do |wf|
         wf[:steps].each_key do |cid|
-          wf[:steps][cid][:metrics] = container_metrics(cid)
+          wf[:steps][cid][:metrics] = fetched[cid]
         end
         wf
       end
     end
 
     #
-    # Metrics for each container
+    # Fetch container metrics for all cids
     #
-
-    def container_metrics(cid)
-      [
-        metrics_cpu(cid),
-        metrics_memory(cid),
-        metrics_blkio(cid),
-      ].inject(&:merge)
+    def fetch_metrics
+      bucket_num = @@client.search(bucket_size_query)['aggregations']['bucket_num']['value']
+      Hash[@@client.search(fetch_metrics_query(bucket_num))['aggregations']['summary_per_container_id']['buckets'].map{ |b|
+             [b['key'],
+              {
+                cpu_total_percent: b['max_cpu_usage']['value'],
+                memory_max_usage: b['max_memory_usage']['value'],
+                memory_cache: b['max_memory_cache_usage']['value'],
+                blkio_total_bytes: b['total_blkio']['value']
+              }
+             ]
+           }]
     end
 
-    def metrics_cpu(cid)
-      records = search_container_metrics(cid, "docker_container_cpu")
-      usage_parcent_values = records.map{|r| r["_source"]["fields"]["usage_percent"] }.compact
+    def bucket_size_query
       {
-        "cpu_total_percent": usage_parcent_values.sort.last,
+        index: 'telegraf',
+        body: {
+          query: {
+            bool: {
+              must: {
+                match_all: {}
+              },
+              filter: {
+                bool: {
+                  should: [
+                    {
+                      term: {
+                        'name.keyword': 'docker_container_cpu'
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          aggs: {
+            summary_per_container_id: {
+              terms: {
+                field: 'fields.container_id.keyword',
+                size: 1
+              },
+              aggs: {
+                max_cpu_usage: {
+                  max: {
+                    field: 'fields.usage_percent'
+                  }
+                }
+              }
+            },
+            bucket_num: {
+              value_count: {
+                field: 'fields.container_id.keyword'
+              }
+            }
+          },
+          size: 0
+        }
       }
     end
 
-    def metrics_memory(cid)
-      records = search_container_metrics(cid, "docker_container_mem")
-      memory_usage_fields = records.map{|r| r["_source"]["fields"] }
+    def fetch_metrics_query(bucket_num)
       {
-        "memory_max_usage": memory_usage_fields.map{|r| r["max_usage"] }.compact.sort.last,
-        "memory_cache": memory_usage_fields.map{|r| r["cache"] }.compact.sort.last,
+        index: 'telegraf',
+        body: {
+          query: {
+            bool: {
+              must: {
+                match_all: {}
+              },
+              filter: {
+                bool: {
+                  should: [
+                    {
+                      term: {
+                        'name.keyword': 'docker_container_cpu'
+                      }
+                    },
+                    {
+                      term: {
+                        'name.keyword': 'docker_container_mem'
+                      }
+                    },
+                    {
+                      term: {
+                        'name.keyword': 'docker_container_blkio'
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          aggs: {
+            summary_per_container_id: {
+              terms: {
+                field: 'fields.container_id.keyword',
+                size: bucket_num
+              },
+              aggs: {
+                max_cpu_usage: {
+                  max: {
+                    field: 'fields.usage_percent'
+                  }
+                },
+                max_memory_usage: {
+                  max: {
+                    field: 'fields.max_usage'
+                  }
+                },
+                max_memory_cache_usage: {
+                  max: {
+                    field: 'fields.cache'
+                  }
+                },
+                total_blkio: {
+                  max: {
+                    field: 'fields.io_service_bytes_recursive_total'
+                  }
+                }
+              }
+            }
+          },
+          size: 0
+        }
       }
     end
 
-    def metrics_blkio(cid)
-      records = search_container_metrics(cid, "docker_container_blkio")
-      blkio_records = records.map{|r| r["_source"]["fields"]["io_service_bytes_recursive_total"] }.compact
-      {
-        "blkio_total_bytes": blkio_records.sort.last,
-      }
-    end
 
     #
     # Methods to retrieve metrics data via Elasticsearch API
@@ -162,50 +258,6 @@ module CWLMetrics
       q[:body][:from] = from
       q[:body][:size] = size
       @@client.search(q)["hits"]
-    end
-
-    #
-    # Get metrics data by container id
-    #
-    def search_container_metrics(cid, name)
-      @@client.search(search_container_metrics_query(cid, name))["hits"]["hits"]
-    end
-
-    def search_container_metrics_query(cid, name)
-      {
-        index: 'telegraf',
-        body: {
-          query: {
-            bool: {
-              must: { match_all: {} },
-              filter: {
-                bool: {
-                  must: [
-                    {
-                      term: {
-                        "fields.container_id": cid,
-                      },
-                    },
-                    {
-                      term: {
-                        "name": name
-                      },
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          sort: [
-            {
-              "timestamp": {
-                order: "desc"
-              }
-            }
-          ],
-          size: 10,
-        }
-      }
     end
 
     #
