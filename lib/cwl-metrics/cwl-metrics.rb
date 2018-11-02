@@ -340,7 +340,7 @@ module CWLMetrics
     def extract_input_file_size(step_hash)
       input_files = {}
       step_hash.each_pair do |k,v|
-        if v.class == Hash # go inside "input_files"
+        if k == "input_files"
           v.each_pair do |input_file, input_value| # find input variables passed as File
             if input_value.class == Hash && input_value.has_key?("size")
               input_files[input_value["basename"]] = input_value["size"]
