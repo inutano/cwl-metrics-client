@@ -22,7 +22,7 @@ module CWLMetrics
       table = [tsv_header]
       metrics.each do |wf|
         wf[:steps].each_pair do |cid, step|
-          tifs = step[:input_files].values.reduce(:+) if !step[:input_files].empty?
+          tifs = total_input_file_size(step)
           table << [
             # ID
             cid[0..11],
@@ -36,9 +36,9 @@ module CWLMetrics
             step[:metrics][:memory_cache],
             step[:metrics][:blkio_total_bytes],
             # Container info
-            step[:docker_image],
-            step[:docker_elapsed_sec],
-            step[:docker_exit_code],
+            step[:docker][:container][:image]
+            step[:elapsed_sec],
+            step[:docker][:container][:exit_code],
             # Container meta
             step[:tool_status],
             tifs,
@@ -50,6 +50,22 @@ module CWLMetrics
         end
       end
       table.map{|line| line.join("\t") }.join("\n")
+    end
+
+    def total_input_file_size(step)
+      file_sizes = step[:inputs].map do |input_name,input_value|
+        a = []
+        if input_value.class == Array
+          input_value.map do |val|
+            if val.class == Hash && val["class"] == "File"
+              a << val["size"]
+            end
+          end
+        elsif input_value.class == Hash && val["class"] == "File"
+          a << input_value["size"]
+        end
+      end
+      a.reduce(:+)
     end
 
     def tsv_header
@@ -273,17 +289,12 @@ module CWLMetrics
 
         {
           "workflow_id": record["_id"],
-          "workflow_name": wf_meta["cwl_file"],
+          "workflow_cwl_file": wf_meta["cwl_file"],
           "workflow_start_date": start_date,
           "workflow_end_date": end_date,
           "workflow_elapsed_sec": elapsed_sec,
-          "platform": {
-            "instance_type": wf_meta["platform"]["ec2_instance_type"],
-            "region": wf_meta["platform"]["ec2_region"],
-            "hostname": wf_meta["platform"]["hostname"],
-            "total_memory": wf_meta["platform"]["total_memory"],
-            "disk_size": wf_meta["platform"]["disk_size"],
-          },
+          "inputs": wf_meta["inputs"],
+          "outputs": wf_meta["outputs"],
           "steps": extract_step_info(record["_source"]["steps"]),
         }
       end
@@ -315,23 +326,21 @@ module CWLMetrics
     def extract_step_info(steps_hash)
       step_info = {}
       steps_hash.each_pair do |k,v|
-        d_inspect = v["docker_inspect"]
-        start_date = DateTime.parse(d_inspect["start_time"])
-        end_date = DateTime.parse(d_inspect["end_time"])
+        start_date = DateTime.parse(v["start_date"])
+        end_date = DateTime.parse(v["end_date"])
         elapsed_sec = ((end_date - start_date) * 24 * 60 * 60).to_f
 
-        step_info[v["container_id"]] = {
-          "stepname": v["stepname"],
-          "container_name": v["container_name"],
-          "tool_version": v["tool_version"],
-          "tool_status": v["tool_status"],
-          "input_files": extract_input_file_size(v),
-          "docker_image": v["docker_image"],
-          "docker_cmd": v["docker_cmd"],
-          "docker_start_date": start_date,
-          "docker_end_date": end_date,
-          "docker_elapsed_sec": elapsed_sec,
-          "docker_exit_code": d_inspect["exit_code"],
+        step_info[v["docker"]["container"]["id"]] = {
+          stepname: v["stepname"],
+          start_date: start_date,
+          end_date: end_date,
+          elapsed_sec: elapsed_sec,
+          step_cwl_file: v["cwl_file"],
+          tool_status: v["tool_status"],
+          inputs: v["inputs"],
+          outputs: v["outputs"],
+          docker: v["docker"],
+          platform: v["platform"],
         }
       end
       step_info
