@@ -36,7 +36,7 @@ module CWLMetrics
             (step[:metrics][:memory_cache]      if step[:metrics]),
             (step[:metrics][:blkio_total_bytes] if step[:metrics]),
             # Container info
-            step[:conatiner][:process][:image],
+            step[:container][:process][:image],
             step[:elapsed_sec],
             step[:container][:process][:exit_code],
             # Container meta
