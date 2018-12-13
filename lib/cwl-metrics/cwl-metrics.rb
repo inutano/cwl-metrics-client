@@ -21,31 +21,31 @@ module CWLMetrics
     def tsv
       table = [tsv_header]
       metrics.each do |wf|
-        wf[:steps].each_pair do |cid, step|
+        wf["steps"].each_pair do |cid, step|
           tifs = total_input_file_size(step)
           table << [
             # ID
             cid[0..11],
-            step[:stepname],
+            step["stepname"],
             # Env
-            step[:platform][:hostname],
-            step[:platform][:instance_type],
+            step["platform"]["hostname"],
+            step["platform"]["instance_type"],
             # Metrics
-            (step[:metrics][:cpu_total_percent] if step[:metrics]),
-            (step[:metrics][:memory_max_usage]  if step[:metrics]),
-            (step[:metrics][:memory_cache]      if step[:metrics]),
-            (step[:metrics][:blkio_total_bytes] if step[:metrics]),
+            (step["metrics"]["cpu_total_percent"] if step["metrics"]),
+            (step["metrics"]["memory_max_usage"]  if step["metrics"]),
+            (step["metrics"]["memory_cache"]      if step["metrics"]),
+            (step["metrics"]["blkio_total_bytes"] if step["metrics"]),
             # Container info
-            step[:container][:process][:image],
-            step[:elapsed_sec],
-            step[:container][:process][:exit_code],
+            step["container"]["process"]["image"],
+            step["elapsed_sec"],
+            step["container"]["process"]["exit_code"],
             # Container meta
-            step[:tool_status],
+            step["tool_status"],
             tifs,
             # Workflow meta
-            wf[:workflow_id],
-            wf[:workflow_name],
-            wf[:workflow_elapsed_sec],
+            wf["workflow_id"],
+            wf["workflow_name"],
+            wf["workflow_elapsed_sec"],
           ]
         end
       end
@@ -102,8 +102,8 @@ module CWLMetrics
     def metrics
       fetched = fetch_metrics
       extract_workflow_info.map do |wf|
-        wf[:steps].each_key do |cid|
-          wf[:steps][cid][:metrics] = fetched[cid]
+        wf["steps"].each_key do |cid|
+          wf["steps"][cid]["metrics"] = fetched[cid]
         end
         wf
       end
@@ -117,10 +117,10 @@ module CWLMetrics
       Hash[@@client.search(fetch_metrics_query(bucket_num))['aggregations']['summary_per_container_id']['buckets'].map{ |b|
              [b['key'],
               {
-                cpu_total_percent: b['max_cpu_usage']['value'],
-                memory_max_usage: b['max_memory_usage']['value'],
-                memory_cache: b['max_memory_cache_usage']['value'],
-                blkio_total_bytes: b['total_blkio']['value']
+                "cpu_total_percent" => b['max_cpu_usage']['value'],
+                "memory_max_usage" => b['max_memory_usage']['value'],
+                "memory_cache" => b['max_memory_cache_usage']['value'],
+                "blkio_total_bytes" => b['total_blkio']['value']
               }
              ]
            }]
@@ -288,14 +288,14 @@ module CWLMetrics
         elapsed_sec = ((end_date - start_date) * 24 * 60 * 60).to_f
 
         {
-          "workflow_id": record["_id"],
-          "workflow_cwl_file": wf_meta["cwl_file"],
-          "workflow_start_date": start_date,
-          "workflow_end_date": end_date,
-          "workflow_elapsed_sec": elapsed_sec,
-          "inputs": wf_meta["inputs"],
-          "outputs": wf_meta["outputs"],
-          "steps": extract_step_info(record["_source"]["steps"]),
+          "workflow_id" => record["_id"],
+          "workflow_cwl_file" => wf_meta["cwl_file"],
+          "workflow_start_date" => start_date,
+          "workflow_end_date" => end_date,
+          "workflow_elapsed_sec" => elapsed_sec,
+          "inputs" => wf_meta["inputs"],
+          "outputs" => wf_meta["outputs"],
+          "steps" => extract_step_info(record["_source"]["steps"]),
         }
       end
     end
@@ -331,16 +331,16 @@ module CWLMetrics
         elapsed_sec = ((end_date - start_date) * 24 * 60 * 60).to_f
 
         step_info[v["container"]["process"]["id"]] = {
-          stepname: v["stepname"],
-          start_date: start_date,
-          end_date: end_date,
-          elapsed_sec: elapsed_sec,
-          step_cwl_file: v["cwl_file"],
-          tool_status: v["tool_status"],
-          inputs: v["inputs"],
-          outputs: v["outputs"],
-          container: v["container"],
-          platform: v["platform"],
+          "stepname" => v["stepname"],
+          "start_date" => start_date,
+          "end_date" => end_date,
+          "elapsed_sec" => elapsed_sec,
+          "step_cwl_file" => v["cwl_file"],
+          "tool_status" => v["tool_status"],
+          "inputs" => v["inputs"],
+          "outputs" => v["outputs"],
+          "container" => v["container"],
+          "platform" => v["platform"],
         }
       end
       step_info
