@@ -53,8 +53,8 @@ module CWLMetrics
     end
 
     def total_input_file_size(step)
-      file_sizes = step[:inputs].map do |input_name,input_value|
-        a = []
+      a = []
+      step[:inputs].each do |input_name,input_value|
         if input_value.class == Array
           input_value.map do |val|
             if val.class == Hash && val["class"] == "File"
