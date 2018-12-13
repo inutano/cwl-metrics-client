@@ -36,9 +36,9 @@ module CWLMetrics
             step[:metrics][:memory_cache],
             step[:metrics][:blkio_total_bytes],
             # Container info
-            step[:docker][:container][:image],
+            step[:conatiner][:process][:image],
             step[:elapsed_sec],
-            step[:docker][:container][:exit_code],
+            step[:container][:process][:exit_code],
             # Container meta
             step[:tool_status],
             tifs,
@@ -330,7 +330,7 @@ module CWLMetrics
         end_date = DateTime.parse(v["end_date"])
         elapsed_sec = ((end_date - start_date) * 24 * 60 * 60).to_f
 
-        step_info[v["docker"]["container"]["id"]] = {
+        step_info[v["container"]["process"]["id"]] = {
           stepname: v["stepname"],
           start_date: start_date,
           end_date: end_date,
@@ -339,7 +339,7 @@ module CWLMetrics
           tool_status: v["tool_status"],
           inputs: v["inputs"],
           outputs: v["outputs"],
-          docker: v["docker"],
+          container: v["container"],
           platform: v["platform"],
         }
       end
