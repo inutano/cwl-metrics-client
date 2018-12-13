@@ -31,10 +31,10 @@ module CWLMetrics
             step[:platform][:hostname],
             step[:platform][:instance_type],
             # Metrics
-            step[:metrics][:cpu_total_percent],
-            step[:metrics][:memory_max_usage],
-            step[:metrics][:memory_cache],
-            step[:metrics][:blkio_total_bytes],
+            (step[:metrics][:cpu_total_percent] if step[:metrics]),
+            (step[:metrics][:memory_max_usage]  if step[:metrics]),
+            (step[:metrics][:memory_cache]      if step[:metrics]),
+            (step[:metrics][:blkio_total_bytes] if step[:metrics]),
             # Container info
             step[:conatiner][:process][:image],
             step[:elapsed_sec],
