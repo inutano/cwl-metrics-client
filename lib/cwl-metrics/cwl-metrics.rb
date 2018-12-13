@@ -28,8 +28,8 @@ module CWLMetrics
             cid[0..11],
             step[:stepname],
             # Env
-            wf[:platform][:hostname],
-            wf[:platform][:instance_type],
+            step[:platform][:hostname],
+            step[:platform][:instance_type],
             # Metrics
             step[:metrics][:cpu_total_percent],
             step[:metrics][:memory_max_usage],
