@@ -140,7 +140,7 @@ module CWLMetrics
                   should: [
                     {
                       term: {
-                        'name.keyword': 'docker_container_cpu'
+                        'measurement_name': 'docker_container_cpu'
                       }
                     }
                   ]
@@ -151,20 +151,20 @@ module CWLMetrics
           aggs: {
             summary_per_container_id: {
               terms: {
-                field: 'fields.container_id.keyword',
+                field: 'tag.container_id',
                 size: 1
               },
               aggs: {
                 max_cpu_usage: {
                   max: {
-                    field: 'fields.usage_percent'
+                    field: 'tag.usage_percent'
                   }
                 }
               }
             },
             bucket_num: {
               value_count: {
-                field: 'fields.container_id.keyword'
+                field: 'tag.container_id'
               }
             }
           },
