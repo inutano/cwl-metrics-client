@@ -140,7 +140,7 @@ module CWLMetrics
                   should: [
                     {
                       term: {
-                        'measurement_name': 'docker_container_cpu'
+                        'measurement_name.keyword': 'docker_container_cpu'
                       }
                     }
                   ]
@@ -151,20 +151,20 @@ module CWLMetrics
           aggs: {
             summary_per_container_id: {
               terms: {
-                field: 'tag.container_id',
+                field: 'docker_container_cpu.container_id.keyword',
                 size: 1
               },
               aggs: {
                 max_cpu_usage: {
                   max: {
-                    field: 'tag.usage_percent'
+                    field: 'docker_container_cpu.usage_percent'
                   }
                 }
               }
             },
             bucket_num: {
               value_count: {
-                field: 'tag.container_id'
+                field: 'docker_container_cpu.container_id.keyword'
               }
             }
           },
@@ -187,17 +187,17 @@ module CWLMetrics
                   should: [
                     {
                       term: {
-                        'name.keyword': 'docker_container_cpu'
+                        'measurement_name.keyword': 'docker_container_cpu'
                       }
                     },
                     {
                       term: {
-                        'name.keyword': 'docker_container_mem'
+                        'measurement_name.keyword': 'docker_container_mem'
                       }
                     },
                     {
                       term: {
-                        'name.keyword': 'docker_container_blkio'
+                        'measurement_name.keyword': 'docker_container_blkio'
                       }
                     }
                   ]
@@ -208,28 +208,28 @@ module CWLMetrics
           aggs: {
             summary_per_container_id: {
               terms: {
-                field: 'fields.container_id.keyword',
+                field: 'docker_container_cpu.container_id.keyword',
                 size: bucket_num
               },
               aggs: {
                 max_cpu_usage: {
                   max: {
-                    field: 'fields.usage_percent'
+                    field: 'docker_container_cpu.usage_percent'
                   }
                 },
                 max_memory_usage: {
                   max: {
-                    field: 'fields.max_usage'
+                    field: 'docker_container_mem.max_usage'
                   }
                 },
                 max_memory_cache_usage: {
                   max: {
-                    field: 'fields.cache'
+                    field: 'docker_container_mem.cache'
                   }
                 },
                 total_blkio: {
                   max: {
-                    field: 'fields.io_service_bytes_recursive_total'
+                    field: 'docker_container_blkio.io_service_bytes_recursive_total'
                   }
                 }
               }
