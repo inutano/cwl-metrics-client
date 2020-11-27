@@ -128,7 +128,7 @@ module CWLMetrics
 
     def bucket_size_query
       {
-        index: 'telegraf',
+        index: 'metrics',
         body: {
           query: {
             bool: {
@@ -175,7 +175,7 @@ module CWLMetrics
 
     def fetch_metrics_query(bucket_num)
       {
-        index: 'telegraf',
+        index: 'metrics',
         body: {
           query: {
             bool: {
@@ -266,7 +266,7 @@ module CWLMetrics
     end
 
     def get_total_hits(search_query)
-      window_search(search_query, 0, 0)["total"].to_i
+      window_search(search_query, 0, 0)["total"]["value"].to_i
     end
 
     def window_search(search_query, from, size)
