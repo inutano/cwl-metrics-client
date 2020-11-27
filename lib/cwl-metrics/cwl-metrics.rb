@@ -306,17 +306,11 @@ module CWLMetrics
 
     def search_workflows_query
       {
-        index: 'workflow',
+        index: "workflow",
         body: {
           query: {
             bool: {
-              must: { "match_all": {} },
-              filter: {
-                term:
-                {
-                  "_type": "workflow_log"
-                }
-              }
+              must: { "match_all": {} }
             }
           }
         }
