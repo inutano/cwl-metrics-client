@@ -17,5 +17,14 @@ if __FILE__ == $0
     puts CWLMetrics.json
   when "tsv"
     puts CWLMetrics.tsv
+  when "test"
+    puts "bucket_size"
+    puts CWLMetrics.bucket_size
+
+    puts "fetch_metrics"
+    puts CWLMetrics.fetch_metrics(1)
+
+    puts "search_workflows"
+    puts CWLMetrics.search_workflows
   end
 end

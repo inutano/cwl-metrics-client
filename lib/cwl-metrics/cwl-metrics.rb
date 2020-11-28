@@ -100,7 +100,7 @@ module CWLMetrics
     #
 
     def metrics
-      fetched = fetch_metrics
+      fetched = fetch_metrics_records
       extract_workflow_info.map do |wf|
         wf["steps"].each_key do |cid|
           wf["steps"][cid]["metrics"] = fetched[cid]
@@ -112,18 +112,26 @@ module CWLMetrics
     #
     # Fetch container metrics for all cids
     #
-    def fetch_metrics
-      bucket_num = @@client.search(bucket_size_query)['aggregations']['bucket_num']['value']
-      Hash[@@client.search(fetch_metrics_query(bucket_num))['aggregations']['summary_per_container_id']['buckets'].map{ |b|
-             [b['key'],
-              {
-                "cpu_total_percent" => b['max_cpu_usage']['value'],
-                "memory_max_usage" => b['max_memory_usage']['value'],
-                "memory_cache" => b['max_memory_cache_usage']['value'],
-                "blkio_total_bytes" => b['total_blkio']['value']
-              }
-             ]
-           }]
+    def fetch_metrics_records
+      bucket_num = bucket_size['aggregations']['bucket_num']['value']
+      buckets = fetch_metrics(bucket_num)['aggregations']['summary_per_container_id']['buckets']
+      Hash[
+        buckets.map{|bucket|
+          [
+            bucket['key'],
+            {
+              "cpu_total_percent" => bucket['max_cpu_usage']['value'],
+              "memory_max_usage"  => bucket['max_memory_usage']['value'],
+              "memory_cache"      => bucket['max_memory_cache_usage']['value'],
+              "blkio_total_bytes" => bucket['total_blkio']['value']
+            }
+          ]
+        }
+      ]
+    end
+
+    def bucket_size
+      @@client.search(bucket_size_query)
     end
 
     def bucket_size_query
@@ -171,6 +179,10 @@ module CWLMetrics
           size: 0
         }
       }
+    end
+
+    def fetch_metrics(bucket_num)
+      @@client.search(fetch_metrics_query(bucket_num))
     end
 
     def fetch_metrics_query(bucket_num)
